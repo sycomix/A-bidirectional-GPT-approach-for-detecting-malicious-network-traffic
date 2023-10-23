@@ -25,13 +25,12 @@ def map_item_to_integer_encoding(item, map_dict, allow_new_items=True):
     allow_new_items = True
     if item in map_dict:
         encoding = map_dict[item]
-    else:  # token not seen yet
-        if allow_new_items:
-            encoding = len(map_dict) + 1
-            print(f"new item found! {item}")
-            map_dict[item] = encoding
-        else:
-            encoding = 0
+    elif allow_new_items:
+        encoding = len(map_dict) + 1
+        print(f"new item found! {item}")
+        map_dict[item] = encoding
+    else:
+        encoding = 0
     return encoding
 
 
@@ -104,13 +103,10 @@ class Encoder:
         # return is the time difference between the predecessor timestamp which was processed here
         if self.relativize_timestamp_method == 'relative_to_syntactic_predecessor':
             if self.relativize_timestamp_state is None:  # init state
-                self.relativize_timestamp_state = timestamp
                 res = 0.
             else:
                 res = timestamp - self.relativize_timestamp_state
-                self.relativize_timestamp_state = timestamp
-
-        # inter-arrival times between the same pkt is returned
+            self.relativize_timestamp_state = timestamp
         elif self.relativize_timestamp_method == 'relative_to_semantic_predecessor':
             if self.relativize_timestamp_state is None:  # init state
                 self.relativize_timestamp_state = {pkt: timestamp}
@@ -122,7 +118,6 @@ class Encoder:
                 res = timestamp - self.relativize_timestamp_state[pkt]
                 self.relativize_timestamp_state[pkt] = timestamp
 
-        # returns the plain timestamp
         elif self.relativize_timestamp_method == 'relative_to_fixed':
             res = timestamp
 
@@ -331,7 +326,7 @@ class Encoder:
         if self.discretize_timestamp_method is None:
             pass
         elif self.discretize_timestamp_method == 'time_feature':
-            attributes = {x: y for x, y in zip(self.discretize_timestamp_parameter, timestamp)}
+            attributes = dict(zip(self.discretize_timestamp_parameter, timestamp))
 
             # Default values for missing attributes
             default_attributes = {
@@ -372,7 +367,7 @@ class Encoder:
         :param deco_ts: the decoded version of the timestamp as returned by the @decode function
         :return: a number between 0 and 1, where 0 means pkt are different, 1 means pkts are equal and
         """
-        if not orig_pkt == deco_pkt:
+        if orig_pkt != deco_pkt:
             return 0
         if deco_ts is None:
             return 1
@@ -384,21 +379,19 @@ class Encoder:
         if self.discretize_timestamp_method == 'time_feature':
             # create epsilon environment where timestamp is valid
             interval_low, interval_high = deco_ts - epsilon, deco_ts + epsilon
-            ts_check = orig_ts >= interval_low and orig_ts >= interval_high
-            return ts_check
+            return orig_ts >= interval_low and orig_ts >= interval_high
         elif 'bin' in self.discretize_timestamp_method:
             # check if ts is in interval
             interval_low, interval_high = deco_ts[0], deco_ts[1]
-            ts_check = interval_low <= orig_ts <= interval_high
-            return ts_check
-        elif not self.discretize_timestamp_method is None:
+            return interval_low <= orig_ts <= interval_high
+        elif self.discretize_timestamp_method is not None:
             raise NotImplementedError(self.discretize_timestamp_method)
         else:  # no dis used
             raise NotImplementedError("the equal method is not yet implemented for this encoder combination")
         print("not possible?")
 
     def get_state(self):
-        configuration = {
+        return {
             'combine_pkt_time': self.combine_pkt_time,
             'relativize_timestamp_method': self.relativize_timestamp_method,
             'relativize_timestamp_state': self.relativize_timestamp_state,
@@ -409,6 +402,5 @@ class Encoder:
             'timestamp_mapping': self.timestamp_mapping,
             'timestamp_mapping_state': self.timestamp_mapping_state,
             'pkt_vocab_size': self.pkt_vocab_size,
-            'timestamp_vocab_size': self.timestamp_vocab_size
+            'timestamp_vocab_size': self.timestamp_vocab_size,
         }
-        return configuration

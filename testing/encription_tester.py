@@ -12,7 +12,7 @@ from data.pcap2enc import read_pcap_gz
 def generate_packet():
     src = str(random.randint(1, 5))
     dest = str(random.randint(1, 5))
-    func_code = "func_c " + str(random.randint(1, 5))
+    func_code = f"func_c {random.randint(1, 5)}"
     return (src, dest, func_code)
 
 
@@ -391,7 +391,7 @@ def test_number_new_pkts(encoder_path, replay_data):
     generator_obj = read_pcap_gz(replay_data)
 
     #with PrintCounter() as counter:
-    for current_index, (current_pkt, current_timestamp) in enumerate(generator_obj):
+    for current_pkt, current_timestamp in generator_obj:
         enc.encode(current_pkt, current_timestamp)
 '''            if current_index == 10:
                 print(counter.print_count)

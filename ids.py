@@ -22,8 +22,11 @@ def torch_init():
     torch.backends.cudnn.allow_tf32 = True
     device_type = 'cuda' if 'cuda' in device else 'cpu'
     ptdtype = {'float32': torch.float32, 'bfloat16': torch.bfloat16, 'float16': torch.float16}[dtype]
-    ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
-    return ctx
+    return (
+        nullcontext()
+        if device_type == 'cpu'
+        else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
+    )
 
 
 def fetch_model(checkpoint_name):
@@ -75,8 +78,9 @@ def predict_packet(org_pkt, org_timestamp, sequence, encoder, eval_model, direct
             continue
         else:
             predict_pkt, predict_timestamp = prediction[0], prediction[1]
-        check = encoder.are_equal(org_pkt, org_timestamp, predict_pkt, predict_timestamp)
-        if check:
+        if check := encoder.are_equal(
+            org_pkt, org_timestamp, predict_pkt, predict_timestamp
+        ):
             score += probs[predicted_seq_decoded.index(prediction)]
             break
 
@@ -98,9 +102,7 @@ def evaluate_scores(f_score, b_score):
         f_score *= 2
         b_score = 0
 
-    score_percentage = (f_score + b_score) / 2
-
-    return score_percentage
+    return (f_score + b_score) / 2
 
 def update_state(current_pkt, current_timestamp, current_encodeded, score_forward):
     f_seq_state.append(current_encodeded)
@@ -118,8 +120,7 @@ def load_attackfile():
 
     try:
         with open(attack_meta_data, "r") as file:
-            data = json.load(file)
-            return data
+            return json.load(file)
     except Exception as e:
         print(f"An error occurred while loading the JSON file: {e}")
         return None
@@ -144,11 +145,10 @@ def calculate_metrics(times, attack_intervals, malicious):
                 metrics["TP"] += 1
             else:
                 metrics["FN"] += 1
+        elif malicious[i]:
+            metrics["FP"] += 1
         else:
-            if malicious[i]:
-                metrics["FP"] += 1
-            else:
-                metrics["TN"] += 1
+            metrics["TN"] += 1
 
     for metric in metrics:
         metrics[metric] = metrics[metric] / len(times)
@@ -171,7 +171,9 @@ def ipal_format():
                 break
 
         ipal_enconding.append((packet[0], str(in_interval).lower(), str(packet[2]).lower()))
-    ipal_file_name = "GPT_"+os.path.splitext(os.path.basename(attack_meta_data))[0]+".ipal"
+    ipal_file_name = (
+        f"GPT_{os.path.splitext(os.path.basename(attack_meta_data))[0]}.ipal"
+    )
 
     with open(os.path.join(out_dir,ipal_file_name), "w") as file:
         for i, entry in enumerate(ipal_enconding):

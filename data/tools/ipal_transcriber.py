@@ -58,7 +58,7 @@ attacklist = [attack1, attack2, attack3]
 # Specify the path to your compressed .gz file
 # TODO add support for new attack files generation
 file_path = 'data/attack_ipal/bin_kmeans'
-file_name = 'GPT_attack_1_split_2.pcap.ipal.gz' 
+file_name = 'GPT_attack_1_split_2.pcap.ipal.gz'
 file = os.path.join(file_path, file_name)
 # Create a copy of the decompressed data
 output_data = []
@@ -68,24 +68,24 @@ with gzip.open(file, 'rt') as file:
     for line in file:
         # Parse each line as JSON
         entry = json.loads(line)
-        
+
         # Modify the "malicious" field based on a condition
         timestamp = float(entry["timestamp"])
-        
+
         for attack in attacklist:
             for interval in attack:
                 if (timestamp >= (interval[0] - 7200)) and (timestamp <= (interval[1] - 7200)):
                     entry["malicious"] = interval[2]
-        
+
         for interval in attack4:
             if (timestamp >= (interval[0] - 3600)) and (timestamp <= (interval[1] - 3600)):
                 entry["malicious"] = interval[2]
-        
+
         # Append the modified entry to the output data
         output_data.append(entry)
 
 # Specify a new file where you want to save the modified data
-output_path = file_path+'_rewritten'
+output_path = f'{file_path}_rewritten'
 output_file = os.path.join(output_path, file_name)
 
 # Compress and write the modified data back to a .gz file
@@ -93,7 +93,7 @@ with gzip.open(output_file, 'wt') as file:
     for entry in output_data:
         # Convert the modified entry back to JSON format
         json_entry = json.dumps(entry)
-        
+
         # Write the JSON entry to the output file
         file.write(json_entry + '\n')
 

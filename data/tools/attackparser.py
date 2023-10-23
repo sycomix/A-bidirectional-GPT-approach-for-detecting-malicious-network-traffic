@@ -24,14 +24,14 @@ def process_excel_file(file_path):
     try:
         workbook = openpyxl.load_workbook(file_path)
         for sheet_name in workbook.sheetnames:
-            attack_timeframes = []
             if sheet_name != "Foglio1": # skip overview sheet
                 sheet = workbook[sheet_name]
                 id = 1
+                attack_timeframes = []
                 for row in sheet.iter_rows(min_row=2, values_only=True):  # Assuming header is in the first row
                     start_time = row[1]  # Assuming "Start time" is in the second column
                     end_time = row[2]
-                    if row[1]== None:
+                    if start_time is None:
                         break
                     if sheet_name == 'attack_4':
                         start_time -= timedelta(hours=1)
@@ -51,7 +51,7 @@ def process_excel_file(file_path):
                     print(id)
                     id += 1
                 generateJson(sheet_name, attack_timeframes)
-        
+
     except Exception as e:
         print(f"An error occurred: {e}")
 

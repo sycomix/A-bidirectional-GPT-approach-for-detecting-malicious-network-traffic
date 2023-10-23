@@ -68,7 +68,7 @@ if __name__ == "__main__":
     encoded_data = enc.preprocessing_encoder(list_of_pkt, list_of_timestamps)
     print("encoded_data:", encoded_data)
 
-    out_dir = out_dir + '/' + project
+    out_dir = f'{out_dir}/{project}'
     print(f"saved at {out_dir}")
 
     enc.save_train_data(out_dir, encoded_data)
